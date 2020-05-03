@@ -44,26 +44,22 @@
         `pypy ../../rpython/bin/rpython --opt=jit`
 
 #### Week 5
-*Plan*
-- analysis on 
-- learn about asyncio of PyPy
 
 - About RPython
-1. What is RPython?
-    Named Restricted Python, it's a subset of Python. The restrictions:
-    - dynamic features like class modification could only be used in an initial phase, which is used to construct the final RPython program.
-    - the final RPython program must be well-typed.
-    - only single inheritance
-    * RPython: 
-        - a language for writing VMs
-        - a strict subset of Python
-        - compiled from live python objects, no parser. (Python is a meta programming language for RPython)
-        - translated to C to run
-        - selling point to use Rpython to write VMs: *JIT compiler for free*
-            automatically layer alongside a second representation of the interpreter(tracing interpreter)
-2. What does RPython do?
-3. Why do we need RPython?
-    more expressive than C# and Java.
+    1. What is RPython?
+        Named Restricted Python, it's a subset of Python. The restrictions:
+        - dynamic features like class modification could only be used in an initial phase, which is used to construct the final RPython program.
+        - the final RPython program must be well-typed.
+        - only single inheritance
+        * RPython: 
+            - a language for writing VMs
+            - a strict subset of Python
+            - compiled from live python objects, no parser. (Python is a meta programming language for RPython)
+            - translated to C to run
+            - selling point to use Rpython to write VMs: *JIT compiler for free*
+                automatically layer alongside a second representation of the interpreter(tracing interpreter)
+    2. Why do we need RPython?
+        more expressive than C# and Java.
 
 - JIT in PyPy
     - trace the interpreter(can be applied to all other interpreters)
@@ -93,7 +89,7 @@
         - pro of generator: no memory penalty    
     - coroutine: a function that can suspend its execution before reaching return
 
-* To do *
+*To do*
 - how PyPy implement coroutine
     - Generator
         - stack frame?
@@ -101,7 +97,7 @@
     - event loop:
     - future:
 
-* Things might be interesting *
+*Things might be interesting*
 
 - what is python code object
 - write an interpreter for a new language using PyPy
