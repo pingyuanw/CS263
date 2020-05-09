@@ -1,4 +1,0 @@
-check_rpython_annotations:
-    image: octobus/ci-for-pypy
-    script:
-      - (cd pypy/goal; python2 ../../rpython/bin/rpython --batch -O2 --annotate targetpypystandalone)
