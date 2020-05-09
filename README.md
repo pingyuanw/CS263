@@ -76,12 +76,12 @@
 - Python's async model(asyncio)
     - generator: synchronous, asynchronous
         - iterator:
-            iterable: can be used in an iteration. support __iter__
-            iterator: yield successive items. support __next__
-            iterator protocol: Objects that support the __iter__ and __next__ dunder methods automatically work with for-in loops.
-                __iter__: get the iterator object
-                __next__: get the next item from the iterator object
-                __iter__ returns any object with a __next__ method on it.
+            * iterable: can be used in an iteration. support __iter__
+            * iterator: yield successive items. support __next__
+            * iterator protocol: Objects that support the __iter__ and __next__ dunder methods automatically work with for-in loops.
+                * __iter__: get the iterator object
+                * __next__: get the next item from the iterator object
+                * __iter__ returns any object with a __next__ method on it.
         - yield:
             1. When yield, the program suspends and returns the yielded value. 
             2. the state of that function is saved.
@@ -89,13 +89,29 @@
         - pro of generator: no memory penalty    
     - coroutine: a function that can suspend its execution before reaching return
 
-*To do*
-- how PyPy implement coroutine
+#### Week 6
+- PyPy Interpreter
+    - translated version: run goal/pypy-c
+    - untranlated version, using cpython: run bin/pyinteractive.py
+- how PyPy implements coroutine
     - Generator
         - stack frame?
-            read PyPysource code
+            read PyPy source code
     - event loop:
     - future:
+
+- how to implement concurrency features:
+    - coroutine, by generator, or library such as libcoro
+    - event loop, by library such as asyncio/curio
+
+*To do*
+- implement a simple framework with event loop
+    - schedule tasks
+    - timer
+    - I/O
+    - race condition
+- how libcoro works
+
 
 *Things might be interesting*
 
@@ -106,3 +122,4 @@
 - why is mercurial's branch model fits pypy better than git?
 - implementation of for loops in different languages
 - different implementation of GIL in PyPy
+- greenlet in PyPy
