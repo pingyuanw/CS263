@@ -40,8 +40,13 @@
     2. get source code
         `hg clone http://foss.heptapod.net/pypy/pypy pypy`
     3. install pypy
-    4. translation
-        `pypy ../../rpython/bin/rpython --opt=jit`
+        - brew install pypy: for python2
+        - brew install pypy3: for python3
+    4. run untranslated version:
+        `PYTHONPATH=../pypy python entry.py xx.py`
+    5. translation
+        `cd goal`
+        `pypy ../../rpython/bin/rpython --opt=jit entry.py`
 
 #### Week 5
 
@@ -104,7 +109,17 @@
     - coroutine, by generator, or library such as libcoro
     - event loop, by library such as asyncio/curio
 
+#### Week 7
+- read asyncio source code
+    - how to use custom event loop and custom policy
+    - workflow to schedule and run tasks
+        - core function: Task.__step
+- coroutine deadlocks
+    - try to detect deaklocks at runtime, but failed to produce deadlocks without using asyncio
+
+
 *To do*
+- produce deadlock
 - implement a simple framework with event loop
     - schedule tasks
     - timer
@@ -123,3 +138,4 @@
 - implementation of for loops in different languages
 - different implementation of GIL in PyPy
 - greenlet in PyPy
+- stackless
