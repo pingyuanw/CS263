@@ -117,6 +117,12 @@
 - coroutine deadlocks
     - try to detect deaklocks at runtime, but failed to produce deadlocks without using asyncio
 
+#### Week 8
+- implement a new language to support async/await:
+    - run x without translation
+        `language_x$: PYTHONPATH=../pypy python targetx.py example.x`
+    - run x with translation
+        `language_x$: PYTHONPATH=../pypy python ../pypy/rpython/bin/rpython targetx.py`
 
 *To do*
 - produce deadlock
