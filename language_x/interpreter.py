@@ -1,5 +1,5 @@
 import heapq
-from termcolor import colored
+# from termcolor import colored
 from AST import *
 import monotonic; 
 mtime = monotonic.time.time
@@ -70,6 +70,8 @@ def run_event_loop(main_function):
     # event queue: SleepTask
     queue = []
     stack.append(Frame(main_function, None))
+    running_time = 0
+    sleep_time = 0
     while stack or queue:
         while not stack:
             current_time = mtime()
@@ -80,13 +82,19 @@ def run_event_loop(main_function):
             else:
                 # print('going to sleep for ' + str(queue[0].when - current_time))
                 time.sleep(queue[0].when - current_time)
+                sleep_time += queue[0].when - current_time
 
         while stack:
             frame = stack[-1]
+            start = mtime()
             # print('run stack:', frame)
             frame.run(stack, queue)
+            running_time += (mtime() - start)
 
     print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
+    print('<<<<<<<<<<Acutal running time: ' + str(running_time))
+    print('<<<<<<<<<<Acutal sleep time: ' + str(sleep_time))
+
 
 
         

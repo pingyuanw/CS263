@@ -1,5 +1,5 @@
 import time
-from termcolor import colored
+# from termcolor import colored
 
 class Node(object):
     """ The abstract AST node
