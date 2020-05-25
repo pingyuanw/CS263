@@ -1,0 +1,34 @@
+
+IGNORE: "[ \t\n]";
+INTEGER: "[1-9_][0-9_]*";
+STRING: "\"(.*)\"";
+FUNCTION_NAME: "[a-zA-Z_][a-zA-Z0-9_]*";
+
+
+program
+    : statement* [EOF]
+    ;
+
+statement
+    : await ";"
+    | print ";"
+    | apply ";"
+    | def
+    ;
+
+await
+    : "await" INTEGER
+    | "await" apply
+    ;
+
+print
+    : "print" STRING
+    ;
+
+apply
+    : FUNCTION_NAME "(" INTEGER ")"
+    ;
+
+def
+    : FUNCTION_NAME "(){" statement* "}"
+    ;
