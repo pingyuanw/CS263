@@ -62,7 +62,7 @@ class Transformer(object):
         if target.symbol == 'INTEGER':
             return AwaitSleep(int(target.additional_info))
     def visit_apply(self, node, context):
-        name, _, loop, _ = node.children
+        name, _, loop = node.children
         return ApplyFunc(context[name.additional_info], int(loop.additional_info))
     def visit_print(self, node, context):
         _, target = node.children
