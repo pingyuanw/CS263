@@ -3,7 +3,7 @@ from rpython.rlib.streamio import open_file_as_stream
 from rpython.jit.codewriter.policy import JitPolicy
 
 from parser import parse
-from interpreter import run_event_loop
+from interpreter import run
 
 def main(argv):
     if not len(argv) == 2:
@@ -13,7 +13,7 @@ def main(argv):
     data = f.readall()
     f.close()
     
-    run_event_loop(parse(data))
+    run(parse(data))
     return 0
 
 def target(driver, args):

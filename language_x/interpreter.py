@@ -3,6 +3,9 @@ import heapq
 from AST import *
 import monotonic; 
 mtime = monotonic.time.time
+from multiprocessing import Process
+
+
 
 # from rpython.rlib import jit
 
@@ -57,12 +60,6 @@ class Frame:
                 return
             elif isinstance(command, ApplyFunc):
                 # f():5
-                # stack.append(Frame(command.func, None))
-                # self._loop += 1
-                # if self._loop < command.loop:
-                #     self._pc -= 1
-                # else:
-                #     self._loop = 0
                 stack.extend([Frame(command.func, None) for x in range(command.loop)])
 
                 # required hint indicating this is the end of a loop
@@ -82,19 +79,30 @@ class Frame:
         # schedule callback waiting on it
         if self.callback:
             stack.append(self.callback)
-        
-def run_event_loop(main_function):
-    print('>>>>>>>>>>>>>>>Running')
-    start_time = mtime()
-
+   
+def run(main_function):
     # call stack: Frame
     stack = []
     # event queue: SleepTask
     queue = []
     stack.append(Frame(main_function, None))
-    running_time = 0
-    sleep_time = 0
-    queue_time = 0
+
+    start_time = mtime()
+
+    run_event_loop(stack, queue)
+
+    print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
+
+def run_event_loop(stack, queue):
+
+    # flag = len(stack)
+    # print('>>>>>>>>>>>>>>>New Event Loop Running:', len(stack))
+    # start_time = mtime()
+    # running_time = 0
+    # sleep_time = 0
+    # queue_time = 0
+
+    children = []
     while stack or queue:
         while not stack:
             current_time = mtime()
@@ -105,25 +113,37 @@ def run_event_loop(main_function):
                         break
                     stack.append(task.callback)
                     i += 1
+
                 queue = queue[i:]
-                # heapq.heappop(queue)
-                queue_time += (mtime() - current_time)
+                # queue_time += (mtime() - current_time)
             else:
                 # print('going to sleep for ' + str(queue[0].when - current_time))
                 time.sleep(queue[0].when - current_time)
-                sleep_time += queue[0].when - current_time
-
+                # sleep_time += queue[0].when - current_time
+        
+        start = mtime()
         while stack:
+            if len(stack) > 5000:
+                pivot = len(stack)/2
+                another_stack = stack[pivot:]
+                stack = stack[0:pivot]
+                p = Process(target=run_event_loop, args=(another_stack,[]))
+                children.append(p)
+                p.start()
+
             frame = stack[-1]
-            start = mtime()
             # print('run stack:', frame)
             frame.run(stack, queue)
-            running_time += (mtime() - start)
+        # running_time += (mtime() - start)
 
-    print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
-    print('<<<<<<<<<<Acutal running time: ' + str(running_time))
-    print('<<<<<<<<<<Acutal sleep time: ' + str(sleep_time))
-    print('<<<<<<<<<<Queue time: ' + str(queue_time))
+    for p in children:
+        p.join()
+
+    # print('<<<<<<<<<<<:'+str(flag))
+    # print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
+    # print('<<<<<<<<<<Acutal running time: ' + str(running_time))
+    # print('<<<<<<<<<<Acutal sleep time: ' + str(sleep_time))
+    # print('<<<<<<<<<<Queue time: ' + str(queue_time))
 
 
 
