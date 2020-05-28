@@ -123,15 +123,11 @@
         `language_x$: PYTHONPATH=../pypy python targetx.py example.x`
     - run x with translation
         `language_x$: PYTHONPATH=../pypy python ../pypy/rpython/bin/rpython targetx.py`
+        `language_x$: ./targetx-c example.x`
 
-*To do*
-- produce deadlock
-- implement a simple framework with event loop
-    - schedule tasks
-    - timer
-    - I/O
-    - race condition
-- how libcoro works
+#### Week 9
+- add automatic multiprocessing:
+    - spawn new event loop when stack size > 1000
 
 
 *Things might be interesting*
@@ -145,3 +141,5 @@
 - different implementation of GIL in PyPy
 - greenlet in PyPy
 - stackless
+- produce deadlock/race condition in event loop
+- how libcoro works
