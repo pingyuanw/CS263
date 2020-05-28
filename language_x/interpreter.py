@@ -53,7 +53,7 @@ class Frame:
                 queue.insert(i, newtask)
                 # heapq.heappush(queue, SleepTask(command.target, self))
                 return
-            # await f()
+            # await f():1
             elif isinstance(command, AwaitAnother):
                 stack.pop()
                 stack.append(Frame(command.target.func, self))

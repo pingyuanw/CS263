@@ -7,11 +7,11 @@ hunt_tiger(){
 }
 hunt(){
     await hunt_tiger():1;
-    await hunt_rabbit():2;
+    await hunt_rabbit():1;
 }
 hunt_faster(){
-    hunt_tiger():2;
-    await hunt_rabbit():2;
+    hunt_tiger():1;
+    await hunt_rabbit():1;
 }
 hunt_rabbit():1000000;
 print "end";
