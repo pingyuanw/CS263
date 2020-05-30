@@ -16,6 +16,14 @@ from multiprocessing import Process
 #                        reds = ['stack', 'queue'],
 #                        get_printable_location=printable_loc)
 
+class Counter:
+    count = 0
+    def __init__(self, count):
+        self.count = count
+    def decrease(self):
+        self.count -= 1
+    def is_done(self):
+        return self.count == 0
 class SleepTask:
     def __init__(self, duration, callback):
         self.when = mtime() + duration
@@ -25,12 +33,14 @@ class SleepTask:
         return self.when < other.when
 class Frame:
     _pc = 0
-    _loop = 0
+
     func = None
     callback = None
-    def __init__(self, func, callback):
+    counter = None
+    def __init__(self, func, callback, counter):
         self.func = func
         self.callback = callback
+        self.counter = counter
     def is_finished(self):
         return self._pc >= len(self.func.sequence)
     def run(self, stack, queue):
@@ -53,14 +63,16 @@ class Frame:
                 queue.insert(i, newtask)
                 # heapq.heappush(queue, SleepTask(command.target, self))
                 return
-            # await f():1
+            # await f():5
             elif isinstance(command, AwaitAnother):
                 stack.pop()
-                stack.append(Frame(command.target.func, self))
+                apply_node = command.target
+                counter = Counter(apply_node.loop)
+                stack.extend([Frame(apply_node.func, self, counter) for x in range(apply_node.loop)])
                 return
             elif isinstance(command, ApplyFunc):
                 # f():5
-                stack.extend([Frame(command.func, None) for x in range(command.loop)])
+                stack.extend([Frame(command.func, None, None) for x in range(command.loop)])
 
                 # required hint indicating this is the end of a loop
                 # driver.can_enter_jit(pc=self._pc, frame=self, stack=stack, queue=queue)
@@ -78,14 +90,16 @@ class Frame:
         stack.pop()
         # schedule callback waiting on it
         if self.callback:
-            stack.append(self.callback)
+            self.counter.decrease()
+            if self.counter.is_done():
+                stack.append(self.callback)
    
 def run(main_function):
     # call stack: Frame
     stack = []
     # event queue: SleepTask
     queue = []
-    stack.append(Frame(main_function, None))
+    stack.append(Frame(main_function, None, None))
 
     start_time = mtime()
 
@@ -123,13 +137,13 @@ def run_event_loop(stack, queue):
         
         start = mtime()
         while stack:
-            if len(stack) > 5000:
-                pivot = len(stack)/2
-                another_stack = stack[pivot:]
-                stack = stack[0:pivot]
-                p = Process(target=run_event_loop, args=(another_stack,[]))
-                children.append(p)
-                p.start()
+            # if len(stack) > 5000:
+            #     pivot = len(stack)/2
+            #     another_stack = stack[pivot:]
+            #     stack = stack[0:pivot]
+            #     p = Process(target=run_event_loop, args=(another_stack,[]))
+            #     children.append(p)
+            #     p.start()
 
             frame = stack[-1]
             # print('run stack:', frame)
