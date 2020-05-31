@@ -3,7 +3,8 @@ import heapq
 from AST import *
 import monotonic; 
 mtime = monotonic.time.time
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+from Queue import Empty
 
 
 
@@ -35,15 +36,13 @@ class Frame:
     _pc = 0
 
     func = None
-    callback = None
-    counter = None
-    def __init__(self, func, callback, counter):
+    callback_hash = None
+    def __init__(self, func, callback_hash):
         self.func = func
-        self.callback = callback
-        self.counter = counter
+        self.callback_hash = callback_hash
     def is_finished(self):
         return self._pc >= len(self.func.sequence)
-    def run(self, stack, queue):
+    def run(self, loop):
         while not self.is_finished():
             # required hint indicating this is the top of the opcode dispatch
             # driver.jit_merge_point(pc=self._pc, frame=self, stack=stack, queue=queue)
@@ -53,26 +52,21 @@ class Frame:
 
             # await 1
             if isinstance(command, AwaitSleep):
-                stack.pop()
-                i = 0
+                loop.stack.pop(0)
+
                 newtask = SleepTask(command.target, self)
-                for task in queue:
-                    if newtask.when < task.when:
-                        break
-                    i += 1
-                queue.insert(i, newtask)
-                # heapq.heappush(queue, SleepTask(command.target, self))
+                loop.add_sleep_task(newtask)
                 return
             # await f():5
             elif isinstance(command, AwaitAnother):
-                stack.pop()
+                loop.stack.pop(0)
                 apply_node = command.target
-                counter = Counter(apply_node.loop)
-                stack.extend([Frame(apply_node.func, self, counter) for x in range(apply_node.loop)])
+                loop.add_counter(self, apply_node.loop)
+                loop.stack.extend([Frame(apply_node.func, hash(self)) for x in range(apply_node.loop)])
                 return
             elif isinstance(command, ApplyFunc):
                 # f():5
-                stack.extend([Frame(command.func, None, None) for x in range(command.loop)])
+                loop.stack.extend([Frame(command.func, None) for x in range(command.loop)])
 
                 # required hint indicating this is the end of a loop
                 # driver.can_enter_jit(pc=self._pc, frame=self, stack=stack, queue=queue)
@@ -87,77 +81,142 @@ class Frame:
                 raise NotImplementedError
 
         # frame finish funning
-        stack.pop()
+        loop.stack.pop(0)
         # schedule callback waiting on it
-        if self.callback:
-            self.counter.decrease()
-            if self.counter.is_done():
-                stack.append(self.callback)
+        if self.callback_hash:
+            loop.receive_hash(self.callback_hash)
    
 def run(main_function):
+    start_time = mtime()
+
+    run_event_loop([Frame(main_function, None)], None, 0)
+
+    print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
+
+def run_event_loop(stack, pipe, id):
+    event_loop = EventLoop(stack, pipe, id)
+    event_loop.run()
+
+class EventLoop:
+    id = 0
     # call stack: Frame
     stack = []
     # event queue: SleepTask
     queue = []
-    stack.append(Frame(main_function, None, None))
-
-    start_time = mtime()
-
-    run_event_loop(stack, queue)
-
-    print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
-
-def run_event_loop(stack, queue):
-
-    # flag = len(stack)
-    # print('>>>>>>>>>>>>>>>New Event Loop Running:', len(stack))
-    # start_time = mtime()
-    # running_time = 0
-    # sleep_time = 0
-    # queue_time = 0
-
+    # await counters: {hash: (frame, count)}
+    counters = {}
+    pipe = None
+    # child process: (process, pipe_queue)
     children = []
-    while stack or queue:
-        while not stack:
-            current_time = mtime()
-            if queue[0].when <= current_time:
-                i = 0
-                for task in queue:
-                    if task.when > current_time:
-                        break
-                    stack.append(task.callback)
-                    i += 1
+    def __init__(self, stack, pipe, id):
+        self.stack = stack
+        self.pipe = pipe
+        self.queue = []
+        self.counters = {}
+        self.children = []
+        self.id = id
+    def add_sleep_task(self, newtask):
+        # print('add sleep task')
+        i = 0
+        for task in self.queue:
+            if newtask.when < task.when:
+                break
+            i += 1
+        self.queue.insert(i, newtask)
 
-                queue = queue[i:]
-                # queue_time += (mtime() - current_time)
+    def add_counter(self, callback, count):
+        if hash(callback) in self.counters:
+            raise Exception("!!!!!!")
+        self.counters[hash(callback)] = (callback, count)
+        # print('add counter:', self.id, hash(callback))
+
+    def receive_hash(self, v):
+        # print('receive_hash', self.id, v)
+        if v in self.counters:
+            frame, count = self.counters[v]
+            count -= 1
+            if count == 0:
+                self.stack.append(frame)
+                del self.counters[v]
             else:
-                # print('going to sleep for ' + str(queue[0].when - current_time))
-                time.sleep(queue[0].when - current_time)
-                # sleep_time += queue[0].when - current_time
-        
-        start = mtime()
-        while stack:
-            # if len(stack) > 5000:
-            #     pivot = len(stack)/2
-            #     another_stack = stack[pivot:]
-            #     stack = stack[0:pivot]
-            #     p = Process(target=run_event_loop, args=(another_stack,[]))
-            #     children.append(p)
-            #     p.start()
+                self.counters[v] = (frame, count)
+            # print(count)
+        else:
+            self.pipe.put_nowait(v)
+    def run(self):
+        # flag = len(stack)
+        print('>>>>>>>>>>>>>>>New Event Loop Running:', self.id, len(self.stack))
+        start_time = mtime()
+        # running_time = 0
+        # sleep_time = 0
+        # queue_time = 0
 
-            frame = stack[-1]
-            # print('run stack:', frame)
-            frame.run(stack, queue)
-        # running_time += (mtime() - start)
+        while self.stack or self.queue or self.counters:
+            start = mtime()
+            while self.stack:
+                # print(len(self.stack))
+                if len(self.stack) > 10000:
+                    pivot = len(self.stack)/2
+                    another_stack = self.stack[pivot:]
+                    self.stack = self.stack[0:pivot]
 
-    for p in children:
-        p.join()
+                    q = Queue()
+                    p = Process(target=run_event_loop, args=(another_stack, q, self.id+1))
+                    self.children.append((p, q))
+                    p.start()
 
-    # print('<<<<<<<<<<<:'+str(flag))
-    # print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
-    # print('<<<<<<<<<<Acutal running time: ' + str(running_time))
-    # print('<<<<<<<<<<Acutal sleep time: ' + str(sleep_time))
-    # print('<<<<<<<<<<Queue time: ' + str(queue_time))
+                frame = self.stack[0]
+                # print('run stack:', frame)
+                frame.run(self)
+            # running_time += (mtime() - start)
+
+            # check await callback
+            # print(v for v in self.counters)
+            start = mtime()
+            for p, q in self.children:
+                if not q.empty():
+                    hash_v = q.get_nowait()
+                    self.receive_hash(hash_v)
+            # print('read pipe time:' + str(mtime() - start))
+                # try:
+                #     hash_v = q.get_nowait()
+                #     self.receive_hash(hash_v)
+                # except Empty:
+                #     pass
+            # check event queue
+            if self.queue:
+                current_time = mtime()
+                if self.queue[0].when <= current_time:
+                    i = 0
+                    for task in self.queue:
+                        if task.when > current_time:
+                            break
+                        self.stack.append(task.callback)
+                        i += 1
+
+                    self.queue = self.queue[i:]
+                    # queue_time += (mtime() - current_time)
+                # else:
+                #     print('going to sleep for ' + str(self.queue[0].when - current_time))
+                #     time.sleep(self.queue[0].when - current_time)
+                    # sleep_time += self.queue[0].when - current_time
+
+        print('wait for children')
+        while self.children:
+            for p, q in self.children:
+                if not q.empty():
+                    hash_v = q.get_nowait()
+                    self.receive_hash(hash_v)
+
+                p.join(timeout=0)
+                if q.empty() and not p.is_alive():
+                    self.children.remove((p,q))
+
+        # print('<<<<<<<<<<<:'+str(flag))
+        print('<<<<<<<<<<Event Loop End', self.id, ' duration: ' + str(mtime() - start_time))
+        # print('<<<<<<<<<<Acutal running time: ' + str(running_time))
+        # print('<<<<<<<<<<Acutal sleep time: ' + str(sleep_time))
+        # print('<<<<<<<<<<Queue time: ' + str(queue_time))
 
 
 

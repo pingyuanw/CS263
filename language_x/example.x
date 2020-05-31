@@ -1,17 +1,16 @@
-
-hunt_rabbit(){
+put_elephant_into_fridge(){
     await 1;
 }
-hunt_tiger(){
-    await 2;
+load_a_truck(){
+    await put_elephant_into_fridge():10;
+    await 1;
 }
-hunt(){
-    await hunt_tiger():1;
-    await hunt_rabbit():1;
+move_fleet_to_costco(){
+    await load_a_truck():10;
+    await 1;
 }
-hunt_faster(){
-    hunt_tiger():1;
-    await hunt_rabbit():1;
+commander(){
+    await move_fleet_to_costco():10000;
+    print "finish";
 }
-hunt_rabbit():1000000;
-print "end";
+commander():1;
