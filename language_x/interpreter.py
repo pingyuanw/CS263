@@ -75,7 +75,10 @@ class Frame:
                 # print('xxx')
                 # print(colored(self.func.name + ':', 'blue') + command.arg)
                 print(self.func.name + ':' + command.arg)
-
+            elif isinstance(command, Compute):
+                x = 1
+                for i in range(command.arg):
+                    x = x*i
             else:
                 print('wrong command in function:', self.func.name)
                 raise NotImplementedError
@@ -91,7 +94,8 @@ def run(main_function):
 
     run_event_loop([Frame(main_function, None)], None, 0)
 
-    print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
+    # print('<<<<<<<<<<Program finished, duration: ' + str(mtime() - start_time))
+    print(mtime() - start_time)
 
 def run_event_loop(stack, pipe, id):
     event_loop = EventLoop(stack, pipe, id)
@@ -145,14 +149,14 @@ class EventLoop:
             self.pipe.put_nowait(v)
     def run(self):
         # flag = len(stack)
-        print('>>>>>>>>>>>>>>>New Event Loop Running:', self.id, len(self.stack))
+        # print('>>>>>>>>>>>>>>>New Event Loop Running:', self.id, len(self.stack))
         start_time = mtime()
         # running_time = 0
         # sleep_time = 0
         # queue_time = 0
 
         while self.stack or self.queue or self.counters:
-            start = mtime()
+            # start = mtime()
             while self.stack:
                 # print(len(self.stack))
                 if len(self.stack) > 10000:
@@ -172,9 +176,9 @@ class EventLoop:
 
             # check await callback
             # print(v for v in self.counters)
-            start = mtime()
+            # start = mtime()
             for p, q in self.children:
-                if not q.empty():
+                while not q.empty():
                     hash_v = q.get_nowait()
                     self.receive_hash(hash_v)
             # print('read pipe time:' + str(mtime() - start))
@@ -201,19 +205,19 @@ class EventLoop:
                 #     time.sleep(self.queue[0].when - current_time)
                     # sleep_time += self.queue[0].when - current_time
 
-        print('wait for children')
+        # print('wait for children')
         while self.children:
             for p, q in self.children:
                 if not q.empty():
                     hash_v = q.get_nowait()
                     self.receive_hash(hash_v)
-
-                p.join(timeout=0)
-                if q.empty() and not p.is_alive():
-                    self.children.remove((p,q))
+                else:
+                    p.join(timeout=0)
+                    if not p.is_alive():
+                        self.children.remove((p,q))
 
         # print('<<<<<<<<<<<:'+str(flag))
-        print('<<<<<<<<<<Event Loop End', self.id, ' duration: ' + str(mtime() - start_time))
+        # print('<<<<<<<<<<Event Loop End', self.id, ' duration: ' + str(mtime() - start_time))
         # print('<<<<<<<<<<Acutal running time: ' + str(running_time))
         # print('<<<<<<<<<<Acutal sleep time: ' + str(sleep_time))
         # print('<<<<<<<<<<Queue time: ' + str(queue_time))

@@ -50,6 +50,8 @@ class Transformer(object):
             return self.visit_apply(node.children[0], context)
         if stmt_type == 'print':
             return self.visit_print(node.children[0], context)
+        if stmt_type == 'compute':
+            return self.visit_compute(node.children[0], context)
         raise NotImplementedError
 
     def visit_def(self, node, context):
@@ -67,6 +69,9 @@ class Transformer(object):
     def visit_print(self, node, context):
         _, target = node.children
         return Print(target.additional_info.strip('\"'))
+    def visit_compute(self, node, context):
+        _, target = node.children
+        return Compute(int(target.additional_info))
 
 transformer = Transformer()
 def parse(source):

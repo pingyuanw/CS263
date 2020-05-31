@@ -1,16 +1,16 @@
 put_elephant_into_fridge(){
+    compute 10240;
     await 1;
 }
-load_a_truck(){
+ship(){
     await put_elephant_into_fridge():10;
+    compute 10240;
     await 1;
 }
-move_fleet_to_costco(){
-    await load_a_truck():10;
+get_100_elephant(){
+    await ship():10;
+    compute 10240;
     await 1;
 }
-commander(){
-    await move_fleet_to_costco():10000;
-    print "finish";
-}
-commander():1;
+await get_100_elephant():1000;
+

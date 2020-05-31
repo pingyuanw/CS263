@@ -52,4 +52,9 @@ class Print(Node):
     def _print(self, indent=0):
         print(' '*indent + '| print("'+str(self.arg)+'")')
 
+class Compute(Node):
+    def __init__(self, arg):
+        self.arg = arg
+    def _print(self, indent=0):
+        print(' '*indent + '| compute("'+str(self.arg)+'")')
 
