@@ -159,7 +159,7 @@ class EventLoop:
             # start = mtime()
             while self.stack:
                 # print(len(self.stack))
-                if len(self.stack) > 10000:
+                if len(self.stack) > 15:
                     pivot = len(self.stack)/2
                     another_stack = self.stack[pivot:]
                     self.stack = self.stack[0:pivot]

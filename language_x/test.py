@@ -3,26 +3,25 @@ import time
 
 def compute_some_thing():
     x = 1
-    for i in range(10240):
+    for i in range(21500000):
         x = x*i
 
-async def put_elephant_into_fridge():
+async def step1():
     compute_some_thing()
     await asyncio.sleep(1)
 
-async def ship():
-    await asyncio.wait([put_elephant_into_fridge() for x in range(10)])
+async def step2():
+    await asyncio.wait([step1() for x in range(10)])
     compute_some_thing()
     await asyncio.sleep(1)
 
-async def get_100_elephant():
-    await asyncio.wait([ship() for x in range(10)])
+async def step3():
+    await asyncio.wait([step2() for x in range(10)])
     compute_some_thing()
     await asyncio.sleep(1)
 
 start = time.monotonic()
-# asyncio.get_event_loop().run_until_complete(get_100_elephant())
-task = asyncio.wait([get_100_elephant() for x in range(10000)])
-asyncio.get_event_loop().run_until_complete(task)
+
+asyncio.get_event_loop().run_until_complete(step3())
 
 print(time.monotonic() - start)
